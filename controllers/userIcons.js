@@ -5,6 +5,20 @@ async function getKnownCategories(conn) {
     return names;
 }
 
+async function getRandom(n) {
+    const icons = await model.getRandom(n)
+    return icons
+}
+
+async function search(query) {
+    const icons = await model.search(query);
+    return icons
+}
+
+async function getIconById(id) {
+    const icon = await model.getByID(id);
+    return icon
+}
 async function getKnownCollections(conn) {
     const names = await model.getCollections();
     return names;
@@ -40,10 +54,13 @@ async function createCollection(name) {
 }
 
 
-module.exports.getKnownCategories = getKnownCategories
-module.exports.getKnownCollections = getKnownCollections
-module.exports.getAllStandardIcons = getAllStandardIcons
-module.exports.getCategoryByName = getCategoryByName
-module.exports.getCollectionByName = getCollectionByName
+module.exports.getKnownCategories = getKnownCategories;
+module.exports.getKnownCollections = getKnownCollections;
+module.exports.getAllStandardIcons = getAllStandardIcons;
+module.exports.getCategoryByName = getCategoryByName;
+module.exports.getCollectionByName = getCollectionByName;
 module.exports.addToCollection = addToCollection;
-module.exports.createCollection = createCollection
+module.exports.createCollection = createCollection;
+module.exports.search = search;
+module.exports.getIconById = getIconById;
+module.exports.getRandom = getRandom;

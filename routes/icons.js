@@ -4,6 +4,10 @@ const metaController = require('../controllers/userIcons.js')
 const router = express.Router();
 // router.use(cors())
 
+router.get('/random', async(req,res) => {
+    const data = await metaController.getRandom(20);
+    res.json(data)
+})
 router.get('/meta/categories', async(req,res) => {
     const data = await metaController.getKnownCategories()
     res.json(data);
@@ -22,10 +26,28 @@ router.get('/meta',async (req,res) => {
     res.json(data)
 })
 
-router.get('/all', async (req,res) => {
+router.post('/all', async (req,res) => {
+    // console.log(req)
+    const query = req.body.query
+    const userData = await metaController.search(query)
+    // console.log(userData)
+    res.json({query,data:userData})
+})
+
+router.get('/all/:id', async (req,res) => {
+    const id = req.params.id;
+    const data = await metaController.getIconById(id);
+    res.json(data);
+})
+
+router.get('/app', async (req,res) => {
     const data = await metaController.getAllStandardIcons();
-    res.json(data)
-} )
+    const knownCollections = await metaController.getKnownCollections();
+    const knownCategories = await metaController.getKnownCategories();
+
+})
+
+router.get('/categories',() => {return})
 
 router.get('/categories/:category',async (req,res) => {
     const cName = req.params.category

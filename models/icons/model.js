@@ -15,9 +15,46 @@ class IDB {
                     map(obj => obj.name);
     }
 
+    async search(query) {
+        const startTime = performance.now();
+        const { standardCollection } = await this.connect();
+        console.log(query)
+        const icons = await standardCollection.collection('all').find({
+            $or: [
+                { name: { $regex: query, $options: 'i' } }, // Case-insensitive regex search on the 'name' field
+                { category: { $regex: query, $options: 'i' } } // Case-insensitive regex search on the 'category' field
+            ]
+        }).toArray();
+
+        const searchResults = icons.map(icon => {
+            const matchedField = icon.name.match(new RegExp(query, 'i')) ? 'name' : 'category';
+            return { ...icon, matchedField };
+        });
+
+        const endTime = performance.now();
+    
+        // Calculate duration
+        const duration = endTime - startTime;
+        console.log(`Search operation took ${duration} milliseconds.`);
+        
+        
+        return searchResults
+    }
+
+    async getByID(id) {
+        const {standardCollection} = await this.connect();
+        console.log(id)
+        const icon = await standardCollection.collection('all').findOne({id:Number(id)})
+        console.log(icon)
+        return icon
+    }
+
     async getAllStandardIcons() {
+        const startTime = performance.now();
         const { standardCollection } = await this.connect();
         const icons = await standardCollection.collection('all').find().toArray();
+        const endTime = performance.now();
+        console.log('all icon query: ', endTime - startTime)
         return icons;
     }
     
@@ -25,7 +62,6 @@ class IDB {
         const collections = await db.listCollections().toArray();
         return this.filterNames(collections);
     }
-
 
     async getCategories() {
         
@@ -90,6 +126,19 @@ class IDB {
             console.log("New Collection Created", name);
         })
         
+    }
+
+    async getRandom(n = 20) {
+        const icons = await this.getAllStandardIcons()
+        const generateIDs = () => {
+            const ids = [];
+            for (let i = 0; i < n; i++){
+                ids.push(Math.floor(Math.random() * icons.length))
+            }
+            return ids;
+        }
+        const randomSample = generateIDs().map(id => icons.find(index => index.id == id))
+        return randomSample;
     }
 
     async addToCollection(name, props, original ) {
