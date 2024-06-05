@@ -16,7 +16,7 @@ app.use(bodyParser.json());
 app.use(express.json());
 app.use(cors());
 
-const iconRouter = require('./routes/icons.js');
+const iconRouter = require('./routes/icons/routes.js');
 const colorRouter = require('./routes/colors.js');
 const timerRouter = require('./routes/timers.js');
 const trackerRouter = require('./routes/trackers.js');

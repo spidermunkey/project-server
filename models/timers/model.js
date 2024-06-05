@@ -109,7 +109,6 @@ class API {
 
     async getLogs(tID){
         const {logs} = await this.connect();
-        
         const query = {'tID': tID};
         const trackerLogs = await logs.find( query ).toArray();
 
@@ -124,7 +123,7 @@ class API {
             });
             Object.defineProperty(trackerLogs, 'total',{
                 get: function() {
-                    return total(trackerLogs.today())
+                    return total(trackerLogs)
                 }
             })
         return {
@@ -182,6 +181,6 @@ module.exports.api = new API();
     const api = new API()
         await api.connect();
         const logs = await api.getLogs('lr7ufosd-00KGVWJEDDHG');
-        console.log(logs.total)
+        console.log('logged',logs.total)
 
 })()

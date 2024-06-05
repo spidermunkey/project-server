@@ -1,15 +1,14 @@
-const { mapCollection } = require('./Icon.js');
-const { mongoose } = require('mongoose');
+const { Collection,Icon } = require('./Icon.js');
+const { mongoose, set } = require('mongoose');
 const client  = require('../../utils/connect.js');
 const uri = require('../../.env/config.js');
 
+const { DateTime } = require('../../utils/Datetime.js');
 class IDB {
     constructor() {
         this.url = uri;
     }
-
     // READ
-
     filterNames(listOfCollectionObjects) {
         return listOfCollectionObjects.
                     map(obj => obj.name);
@@ -26,27 +25,27 @@ class IDB {
             ]
         }).toArray();
 
-        const searchResults = icons.map(icon => {
-            const matchedField = icon.name.match(new RegExp(query, 'i')) ? 'name' : 'category';
-            return { ...icon, matchedField };
-        });
-
         const endTime = performance.now();
-    
         // Calculate duration
         const duration = endTime - startTime;
         console.log(`Search operation took ${duration} milliseconds.`);
-        
-        
         return searchResults
     }
 
     async getByID(id) {
         const {standardCollection} = await this.connect();
-        console.log(id)
         const icon = await standardCollection.collection('all').findOne({id:Number(id)})
-        console.log(icon)
         return icon
+    }
+
+    async eachCollection(fn) {
+        const names = await this.getNames()
+        return Promise.all(names.map(async name => {
+            const {userCollection} = await this.connect();
+            const collection = userCollection.collection(name);
+            const result = await fn(collection);
+            return result
+        }))
     }
 
     async getAllStandardIcons() {
@@ -60,11 +59,11 @@ class IDB {
     
     async getNames(db) {
         const collections = await db.listCollections().toArray();
+        console.log('listing collections: ',collections)
         return this.filterNames(collections);
     }
 
     async getCategories() {
-        
         const { standardCollection } =  await this.connect();
         const categories = await this.getNames(standardCollection);
         return categories;
@@ -75,7 +74,6 @@ class IDB {
         const collections = await this.getNames(userCollection);
         return collections;
     }
-
 
     async collectionExist(name) {
         const { userCollection } = await this.connect();
@@ -88,26 +86,63 @@ class IDB {
         return names.includes(name);
     }
 
+    async getMeta(...collections) {
+        const names = await this.getCollections();
+        const {collectionInfo} = await this.connect();
+        const metaDocuments = await Promise.all(collections.map(async collection => {
+            if (names.includes(collection)) {
+                const document = await collectionInfo.findOne({name:collection})
+                console.log('DOCUMENT',document)
+                return document
+            }
+        }))
+        console.log('META', metaDocuments)
+        return {...metaDocuments[0]};
+    }
 
     async getCollectionByName(name) {
+        console.log('fetching collection',name)
+        const startTime = performance.now();
         const { userCollection } = await this.connect();
-        const names = await this.getCollections(userCollection);
+        const names = await this.getCollections();
         if (names.includes(name)) {
-            const icons = await userCollection.collection(name).find().toArray();
-            return icons;
+            const collection = await userCollection.collection(name);
+            const icons = await collection.find().toArray();
+            const endTime = performance.now();
+            console.log('collection query: ',name,' : ', endTime - startTime)
+            const documents = await this.getMeta(name)
+            const test = {
+                icons,
+                ...documents
+            }
+            console.log(test)
+            return {
+                icons,
+                ...documents,
+            };
         } else {
             return false;
         }
     }
 
     async getCategoryByName(name) {
+        console.log('fetching category',name)
+        const startTime = performance.now();
         const { standardCollection } = await this.connect();
         const names = await this.getCategories();
-        console.log(names);
-        console.log(names.includes(name),name);
+        console.log('fetched category names',names);
         if (names.includes(name)) {
-            const icons = await standardCollection.collection(name).find().toArray();
-            return icons;
+            const collection = standardCollection.collection(name)
+            const icons = await collection
+            // .aggregate([{$sample: {size:100}}]).toArray();
+            .find().toArray();
+            const endTime = performance.now();
+            const size = collection.countDocuments();
+            console.log('category query: ',name,' : ', endTime - startTime)
+            return {
+                size,
+                icons
+            }
         } else {
             return false;
         }
@@ -119,70 +154,69 @@ class IDB {
         if (collectionExist)
             return 'collection already exists';
 
-        const { userCollection } = await this.connect();
-        
-        userCollection.createCollection(name, function(err,res){
-            if (err) throw err;
-            console.log("New Collection Created", name);
-        })
-        
+        const { userCollection, settings } = await this.connect();
+        const collection = await userCollection.createCollection(name);
+        const meta = this.createMetaDocument(name);
+        await settings.insertOne(meta);
     }
 
-    async getRandom(n = 20) {
-        const icons = await this.getAllStandardIcons()
-        const generateIDs = () => {
-            const ids = [];
-            for (let i = 0; i < n; i++){
-                ids.push(Math.floor(Math.random() * icons.length))
-            }
-            return ids;
-        }
-        const randomSample = generateIDs().map(id => icons.find(index => index.id == id))
-        return randomSample;
+    createMetaDocument(collectionName) {
+            return {
+              name: collectionName,
+              size: 0,
+              id: uuid(),
+              created_at: DateTime.stamp(),
+              updated_at: null,
+              random: [],
+              sample: [],
+            }  
+    }
+
+    async getRandom(n = 20, collection = 'all') {
+        let connection = await this.connect()
+        let sampleSize = !isNaN(n) ? Number(n) : 20
+        console.log(n,Math.max(n,20), !isNaN('3'),sampleSize)
+        let db = collection === 'all' ?  connection.standardCollection : connection.userCollection;
+        const randomDocuments = await db.collection(collection).aggregate([
+            { $sample: { size: sampleSize} }
+          ]).toArray();
+          console.log('sample size',randomDocuments.length,[randomDocuments])
+
+        return randomDocuments;
     }
 
     async addToCollection(name, props, original ) {
-        // check if the collection actually exists
         const collectionExists = await this.collectionExist(name);
+        
         if (!collectionExists) return { message:'this collection doesnt exist', success:false, reason:'collection not found'};
-        
-        // open connection through mongoose
-        await this.mongoose();
-        // returns model based on the collection name passed
-        const collection = mapCollection(name);
-        
-        // check if the name already exists
+        const {userCollection,settings} = (await this.connect());
+        const collection = userCollection.collection(name);
         const existingDoc = await collection.findOne({ name: props.name });
-        if (existingDoc) return { message:`A document with the name "${props.name}" already exists.`, success:false, reason:'duplicate name'};
-    
 
-        if(!props.knownCollections.includes(name)) props.knownCollections.push(name);
+        if (existingDoc) return { 
+            message:`A document with the name "${props.name}" already exists.`, 
+            success:false, 
+            reason:'duplicate name'
+        };
+        // USE TRACE ID!
+        if(props._id) {
+            props.trace = props._id
+        };
 
-        if(props._id) props._id = '';
-        if(props.observer._id) props.observer._id = '';
+        const schema = new Icon({
+            ...props,
+            created_at: DateTime.stamp(),
+        })
+        const result = await collection.insertOne(schema);
+        
+        const collectionInfo = settings;
+        const metaInfo = collectionInfo.findOne({name:name})
+        if (metaInfo) {
+            metaInfo.size = await collection.countDocuments();
+            metaInfo.lastUpdated = DateTime.stamp();
+        }
+        return { message: `icon successfully added to ${name}`, success:true, result: schema};
 
-        if(name === 'favorites' && props.isFavorite !== true) props.isFavorite = true;
-        let kc = original.knownCollections || [];
-        let isFav = original.isFavorite;
-        let from = original.category;
-        if(!kc.includes(name)) kc.push(name);
-        if(name === 'favorites' && isFav !== true) isFav = true;
-
-
-        // on success create based on schema
-        const result = await collection.create(props);
-
-        const standardCollection = (await this.connect()).standardCollection;
-
-        let test = await standardCollection.collection('all').findOneAndUpdate( {
-            name: original.rebased ? original.rebased : original.name
-        },{ $set:{knownCollections:kc, isFavorite: isFav }})
-
-        let test2 = await standardCollection.collection(from).findOneAndUpdate( {
-            name: original.rebased ? original.rebased : original.name
-        },{ $set:{knownCollections: kc, isFavorite:isFav }})
-
-        return { message: `icon successfully added to ${name}`, success:true, reason:'success' };
     }
 
     async editIcon(name,props) {
@@ -199,15 +233,15 @@ class IDB {
         console.log('Successfully connected to database server');
         const standardCollection = client.db('icons');
         const userCollection = client.db('user_icons');
+        const collectionInfo = userCollection.collection('{{meta}}')
         const dbs = {
             connection,
             standardCollection,
-            userCollection
+            userCollection,
+            collectionInfo,
         }
         return dbs;
     }
-
-
 
     async close() {
         await client.close();
