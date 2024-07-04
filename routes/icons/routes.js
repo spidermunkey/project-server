@@ -55,7 +55,6 @@ const getData = async (req,res) => {
 const addToCollection = async (req, res) => {
     const cName = req.params.collection
     const {payload} = req.body
-    console.log('post request recieved... payload:',payload)
     const response = await metaController.addToCollection(payload.collection, payload.props, payload.original)
     res.json(response)
 }
@@ -63,6 +62,12 @@ const createCollection = async (req,res) => {
     const cName = req.body.payload.name
     const data = await metaController.createCollection(cName)
     res.json(data)
+}
+
+const logFavorite = async (req,res) => {
+    const {cid,id,type} = req.body.props;
+    const response = await metaController.logFavorite({cid,id,type});
+    res.json(response);
 }
 
 const nulp = () => null
@@ -84,6 +89,7 @@ router.get('/collections/:collection', getCollection)
 router.post('/collections/create',createCollection )
 router.post('/collections', addToCollection)
 router.post('/all', search)
+router.post('categories',logFavorite)
 
 // CATCH
 router.get('/', (req,res) => {

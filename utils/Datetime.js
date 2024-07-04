@@ -1,4 +1,4 @@
-module.exports.DateTime = class DateTime {
+module.exports = class DateTime {
   constructor(dateObject) {}
 
   static mns = 1 / 1000;

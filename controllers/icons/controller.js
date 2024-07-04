@@ -12,11 +12,14 @@ module.exports = {
     },
     
     async search(query) {
+
         const icons = await model.search(query);
-        return icons.map(icon => {
-            const matchedField = icon.name.match(new RegExp(query, 'i')) ? 'name' : 'category';
-            return { ...icon, matchedField };
-        });
+        if (icons)
+            icons.map(icon => {
+                const matchedField = icon.name.match(new RegExp(query, 'i')) ? 'name' : 'category';
+                return { ...icon, matchedField };
+            });
+        return icons
     },
     
     async getIconById(id) {
@@ -47,11 +50,16 @@ module.exports = {
         else return 'nothing to see here'
     },
     
-    async addToCollection(name,data,orweliginal) {
-        const result = await model.addToCollection(name,data,original)
+    async addToCollection(name,data) {
+        const result = await model.addToCollection(name,data)
         return result;
     },
     
+    async logFavorite(props) {
+        const result = await model.logFavorite(props);
+        return result;
+    },
+
     async createCollection(name) {
         const result = await model.createCollection(name)
         return result;
