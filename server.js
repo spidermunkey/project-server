@@ -1,5 +1,4 @@
 const morgan = require('morgan');
-
 const express = require('express');
 const app = express();
 const http = require('http')
@@ -12,8 +11,8 @@ const wss = new WebSocket.Server({server});
 const bodyParser = require('body-parser');
 const { MongoClient } = require('mongodb');
 const { CONNECTION_STRING } = require('./.env/config.js');
-const {watch} = require('./utils/watch.js');
-
+const {FsMonitor} = require('./utils/watch.js');
+const watcher = new FsMonitor(wss);
 // const PORT = process.env.SPORT || 1279
 
 app.use(morgan('tiny'));
@@ -42,6 +41,7 @@ async function run() {
     try {
         const connection = await MongoClient.connect(CONNECTION_STRING);
         app.locals.connection = connection;
+        watcher.watch();
         server.listen(PORT, (err) => console.log(`listening for api connections on port:${PORT}`))
     } catch (e) {
         console.log(e);
@@ -49,17 +49,3 @@ async function run() {
 };
 
 run();
-wss.on('connection', function connection(ws) {
-    
-    console.log('A new client Connected!');
-    ws.send(JSON.stringify({ type: 'status', message:'listening for updates'}));
-    watch(function(status) {
-        console.log('STATUS',status);
-        ws.send(JSON.stringify({type: 'new entry', data: status }));
-    });
-    ws.on('message', function incoming(message) {
-        console.log('recieved: %s', message);
-        // ws.send('test');
-    })
-})
-
