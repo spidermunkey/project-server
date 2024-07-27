@@ -432,8 +432,6 @@ module.exports = class DateTime {
     const then = since.getTime();
     const nowDate = new Date(compare);
 
-    console.log(now, then);
-
     const monthsInYear = 1 / 12;
     const msnYear = DateTime.msnDay * 365;
     const msInWeek = 604800000;
@@ -480,7 +478,6 @@ module.exports = class DateTime {
     }
 
     msAgo = Math.abs(msAgo);
-    console.log(msAgo);
 
     const years = msAgo >= msnYear ? msAgo / msnYear : 0;
 
@@ -538,7 +535,7 @@ module.exports = class DateTime {
     if (ago.yearsAgo >= 1) {
       if (ago.months >= 1)
         ago.string = `${ago.years} Years, ${ago.months} Months ${context}`;
-      else if (ago.months < 1) ago.string = `${ago.years} Years ${context}`;
+        else if (ago.months < 1) ago.string = `${ago.years} Years ${context}`;
     } else if (ago.weeksAgo < 4 && ago.weeksAgo > 2) {
       ago.string = `${ago.weeksAgo} Weeks ${context}`;
     } else if (ago.daysAgo < 14 && ago.daysAgo > 2) {
@@ -549,12 +546,13 @@ module.exports = class DateTime {
       } else {
         ago.string = `${ago.hoursAgo} Hours ${context}`;
       }
-    } else if (ago.minutesAgo < 59 && ago.minutesAgo > 1) {
+    } else if (ago.minutesAgo < 60 && ago.minutesAgo >= 1) {
       ago.string = `${ago.minutesAgo} Minutes ${context}`;
-    } else if (ago.secondsAgo < 60 && ago.secondsAgo > 30) {
+    } else if (ago.secondsAgo <= 60 && ago.secondsAgo >= 30) {
       ago.string = `${ago.secondsAgo} Seconds ${ago}`;
     } else if (ago.secondsAgo < 30) {
       // ago.string = `Just Now`
+      ago.string = "Just Now";
       ago.time = "Just Now";
       ago["context"] = context;
       return ago;

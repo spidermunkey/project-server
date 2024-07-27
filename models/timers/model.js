@@ -1,5 +1,5 @@
 const client = require('../../utils/connect');
-const uri = require('../../.env/config.js');
+const uri = require('../../config.js/config.js');
 
 
 function msToStamp(ms) {

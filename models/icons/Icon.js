@@ -1,28 +1,3 @@
-// const { Schema, default: mongoose } = require('mongoose');
-
-// const Icon = new Schema({
-//     tags: Array,
-//     cid: Number,
-//     id: Number,
-//     vid: Number,
-//     trace: Number,
-//     colors: Array,
-//     isBenched: Boolean,
-//     isFavorite: Boolean,
-//     knownCollections: Array,
-//     rebased: String,
-//     logs: Object,
-//     html: Array,
-//     markup: {
-//         required: true,
-//         type: String,
-//     },
-//     name: {
-//         type: String,
-//         required: true,
-//     }
-// })
-
 module.exports.Icon = function(props) {
   const {
     tags,
@@ -34,15 +9,66 @@ module.exports.Icon = function(props) {
     isBenched,
     isFavorite,
     rebased,
+    collection,
     logs,
     html,
     markup,
     name,
     created_at,
-    updated_at
+    updated_at,
+    subtype,
+    sub_collection,
+    del_status,
+
 } = props;
     return {
-        tags,cid,id,vid,trace,colors,isBenched,isFavorite,rebased,logs,html,markup,name
+        cid,id,vid,trace,colors,isBenched,isFavorite,rebased,logs,tags,html,markup,name,subtype,collection,sub_collection,
+        del_status,
     }
 }
+/* 
+    properties: {
+        previews,
+        viewbox,
+        height,
+        width,
+        vbx,
+        vby,
+        vbh,
+        vbw,
+        rotation,
+    }
+    colors: {
+        stroke,
+        fill,
+        markers,
+        presets,
+    }
+    meta: {
+        id,
+        trace,
+        cid,
+        vid,
+    }
+    data: {
+        html: {
+            default,
+            components
+        }
+        markup,
+        name,
+        collection,
+        subtype,
+    }
+    status: {
+        isBenched,
+        isFavorite,
+        logs,
+    }
+    tags: {
+        [...tags]
+        comments,
+    }
+*/
+
 // module.exports.Collection = Collection;

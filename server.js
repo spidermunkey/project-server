@@ -9,10 +9,7 @@ const WebSocket = require('ws');
 const wss = new WebSocket.Server({server});
 
 const bodyParser = require('body-parser');
-const { MongoClient } = require('mongodb');
-const { CONNECTION_STRING } = require('./.env/config.js');
 const {FsMonitor} = require('./utils/watch.js');
-const watcher = new FsMonitor(wss);
 // const PORT = process.env.SPORT || 1279
 
 app.use(morgan('tiny'));
@@ -39,9 +36,10 @@ app.use((req,res) => {
 
 async function run() {
     try {
-        const connection = await MongoClient.connect(CONNECTION_STRING);
-        app.locals.connection = connection;
-        watcher.watch();
+        // ... check db status
+            //.. connect db => meta
+                //... start sync => stats
+        // ... bind listeners and events
         server.listen(PORT, (err) => console.log(`listening for api connections on port:${PORT}`))
     } catch (e) {
         console.log(e);
