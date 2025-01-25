@@ -2,6 +2,7 @@ const express = require('express')
 // const cors = require('cors')
 const metaController = require('../../controllers/icons/controller.js')
 const router = express.Router()
+const {Local} = require('../../models/icons/local/monitor.js')
 // router.use(cors())
 
 const getRandom = async(req,res) => {
@@ -92,9 +93,13 @@ router.post('/all', search)
 router.post('categories',logFavorite)
 
 // CATCH
+router.get('/local', (req,res) => {
+    res.json(Local.db.collection_names)
+})
 router.get('/', (req,res) => {
     res.json('hello from icon api')
 })
+
 router.get((req,res) => {
     res.status(404)
 })

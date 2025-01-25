@@ -1,4 +1,5 @@
-module.exports.uuid = function() {
+module.exports.uuid = uuid
+function uuid() {
   let timmy = Date.now().toString(36).toLocaleLowerCase();
   // random high number
   let randy = parseInt(Math.random() * Number.MAX_SAFE_INTEGER);

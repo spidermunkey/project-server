@@ -1,16 +1,28 @@
+const client = require('../utils/connect.js');
+
 const filteredNames = listOfCollectionObjects => listOfCollectionObjects.map( obj => obj.name );
-const existingCollections = async (database) =>  filteredNames(await database.listCollections().toArray())
+const existingCollections = async (database) =>  filteredNames(await database.listCollections().toArray());
+
+const connect = async name => {
+    const connection = await client.connect();
+    const standardCollection = connection.db('colors');
+    const user_collection = connection.db('user_colors');
+    return {
+        connection,
+        standardCollection,
+        user_collection,
+    };
+}
 
 module.exports.welcome = (req,res) => {
     res.json('welcome to the colors endpoint')
 }
 
 module.exports.getMeta = async(req,res,next) => {
-    const standardCollection = req.app.locals.connection.db('colors');
-    const userCollection = req.app.locals.connection.db('user_colors');
+    const {standardCollection,user_collection} = await connect();
     console.log('fetching metadata');
     const defaultPalettes = filteredNames( await standardCollection.listCollections().toArray() );
-    const userPalettes = filteredNames( await userCollection.listCollections().toArray() );
+    const userPalettes = filteredNames( await user_collection.listCollections().toArray() );
 
 
     res.json({
@@ -24,8 +36,9 @@ module.exports.getMeta = async(req,res,next) => {
 module.exports.getCategory = async (req,res,next) => {
     
         const collectionName = req.params.category;
+        const {standardCollection,user_collection} = await connect();
 
-        const db = req.app.locals.connection.db('colors');
+        const db = standardCollection
         const collection = db.collection(collectionName);
 
         const {tone,hue} = req.query
@@ -99,8 +112,9 @@ module.exports.getFilteredCategory = async (req,res,next) => {
     }
 
     const collectionName = req.params.collection;
+    const {standardCollection,user_collection} = await connect();
 
-    const db = req.app.locals.connection.db('colors');
+    const db = standardCollection
     const collection = db.collection(collectionName);
     console.log(req.body)
     const {tones,hues} = req.body.options;
@@ -149,8 +163,9 @@ module.exports.getCollection = async (req,res,next) => {
 
 
     const collectionName = req.params.collection;
+    const {standardCollection,user_collection} = await connect();
 
-    const db = req.app.locals.connection.db('user_colors');
+    const db = user_collection
     const collection = db.collection(collectionName);
     console.log(req.body);
 
@@ -235,8 +250,9 @@ module.exports.getFilteredCollection = async (req,res,next) => {
     console.log('here')
 
     const collectionName = req.params.collection;
+    const {standardCollection,user_collection} = await connect();
 
-    const db = req.app.locals.connection.db('user_colors');
+    const db = user_collection
     const collection = db.collection(collectionName);
     console.log(req.body)
     const {tones,hues} = req.body.options;
@@ -282,8 +298,9 @@ module.exports.getFilteredCollection = async (req,res,next) => {
 module.exports.createCollection = async (req,res,next) => {
 
     const collectionName = req.body.cName;
+    const {standardCollection,user_collection} = await connect();
     const description = req.body.desc;
-    const db = req.app.locals.connection.db('user_colors');
+    const db = user_collection
     let message;
 
     const collections = await existingCollections(db);
@@ -319,8 +336,9 @@ module.exports.createCollection = async (req,res,next) => {
 }
 
 module.exports.dropCollection = async (req,res,next) => {
+    const {standardCollection,user_collection} = await connect();
     const collectionName = req.body.cName;
-    const db = req.app.locals.connection.db('user_colors');
+    const db = user_collection
     let message;
     console.log(req.body)
     const collections = await existingCollections(db);
@@ -343,8 +361,9 @@ module.exports.dropCollection = async (req,res,next) => {
 
 module.exports.addToCollection = async (req,res,next) => {
     console.log('no here')
+    const {standardCollection,user_collection} = await connect();
     const collectionName = req.params.collection;
-    const db = req.app.locals.connection.db('user_colors');
+    const db = user_collection
     console.log(req.body);
     const {name,hex} = req.body;
 
@@ -394,27 +413,25 @@ module.exports.addToCollection = async (req,res,next) => {
 module.exports.getColorById = async(req,res,next) => {
     const collectionName = req.query.collection;
     const type = req.query.type;
+    const connection = await client.connect();
+    const standardCollection = connection.db('colors');
+    const user_collection = connection.db('user_colors');
     let db
 
     if (type === 'palette')
-        db = req.app.locals.connection.db('colors');
+        db = standardCollection
     else if (type === 'collection')
-        db = req.app.locals.connection.db('user_colors')
-
+        db = user_collection
     else return;
 
     console.log(req.query, collectionName)
     const collection = db.collection(collectionName);
-
     const {id} = req.params;
-
     const {ObjectId} = require('mongodb');
     const color = await collection.findOne({
         _id: new ObjectId(id)
     })
-
     if (color && collection) res.send({ id , color })
-
     else res.send({status: false})
 
 }

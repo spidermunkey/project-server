@@ -1,4 +1,4 @@
-module.exports = class DateTime {
+class DateTime {
   constructor(dateObject) {}
 
   static mns = 1 / 1000;
@@ -571,3 +571,4 @@ module.exports = class DateTime {
     return float - Math.floor(float);
   }
 }
+module.exports = DateTime

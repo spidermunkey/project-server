@@ -1,6 +1,6 @@
-const client  = require('./connect.js');
-const { DateTime } = require('./Datetime.js');
-const { uuid } = require('./uuid.js');
+const client  = require('../connect.js');
+const { DateTime } = require('../Datetime.js');
+const { uuid } = require('../uuid.js');
 
 async function connect() {
   const connection = await client.connect();

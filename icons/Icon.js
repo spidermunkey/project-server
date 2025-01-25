@@ -6,6 +6,7 @@ module.exports.Icon = function(props) {
     vid,
     trace,
     colors,
+    settings,
     isBenched,
     isFavorite,
     rebased,
@@ -19,12 +20,11 @@ module.exports.Icon = function(props) {
     subtype,
     sub_collection,
     del_status,
-    altered,
 
 } = props;
     return {
         cid,id,vid,trace,colors,isBenched,isFavorite,rebased,logs,tags,html,markup,name,subtype,collection,sub_collection,
-        del_status, altered
+        del_status,settings
     }
 }
 /* 

@@ -1,7 +1,6 @@
 const chokidar = require('chokidar');
 const fs = require('fs-extra');
 const path = require('path');
-const { FsModel } = require('./model.js');
 
 const rootPathName = 'icons'
 const pathToDownloads = "C:/Users/justi/dev/data/downloads";
