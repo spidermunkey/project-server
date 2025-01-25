@@ -2,3 +2,5 @@
 .config
 env
 node_modules
+icons/local/fsdb.json
+models/icons/local/fsdb.json
