@@ -1,21 +1,25 @@
 const express = require('express');
 const router = express.Router();
 const { Mongo } = require('../model.js');
+const { Local } = require('../local.js')
+
 
 router.get('/info', async function getCollectionData(request,response){
+  console.log('fetching collection data')
   result = await Mongo.get_data_formated()
-  console.dir(result)
   response.json(result)
 })
-
 router.get('/info/names', async function getCollectionNames(request,response) {
   response.json(await Mongo.get_collection_names());
 })
-
-router.get('/settings', async function getCollectionSettings(request,response){
+router.put('/settings/:collection', async function clearDefaultSetting(request,response){
+  const collection = request.params.collection
+  const result = await Mongo.clear_collectionDefault_setting(collection)
+  response.json(result)
+})
+router.get('/settings/:collection', async function getCollectionSettings(request,response){
   
 })
-
 router.post('/settings',async function addCollectionSetting(request,response){
   const { payload } = request.body;
   // needs better sanitization
@@ -30,7 +34,6 @@ router.delete('/settings',async function deleteCollectionSetting(request,respons
   const result = await Mongo.delete_collection_preset(cid,pid)
   response.json(result);
 })
-
 router.put('/settings', async function applySettingDefault(request,response){
     const { payload } = request.body
     // needs better sanitization
@@ -38,17 +41,32 @@ router.put('/settings', async function applySettingDefault(request,response){
     const result = await Mongo.set_collectionDefault_setting(collection,preset)
     response.json(result)
 })
-router.put('/settings/:collection', async function clearDefaultSetting(request,response){
-  const collection = request.params.collection
-  const result = await Mongo.clear_collectionDefault_setting(collection)
+
+
+router.post('/colors', async function add_collection_colorset(request,response) {
+  const { payload } = request.body
+  // needs better sanitization
+  const {cid,colorset} = payload
+  console.log('ADDING COLORSET', colorset )
+  const result = await Mongo.add_collection_colorset(cid,colorset);
+  response.json(result);
+})
+router.put('/colors/:collection', async function clear_default_color(request,response){
+  const collection = request.params.collection;
+  const result = await Mongo.clear_collectionDefault_color(collection);
   response.json(result)
+})
+router.delete('/colors', async function removeCollectionColorset(request,response){
+  let cid = decodeURIComponent(request.query.cid);
+  let csid = decodeURIComponent(request.query.csid);
+  const result = await Mongo.delete_collection_color(cid,csid);
+  response.json(result);
 })
 
 router.post('/create', async function createCollection (request,response) {
   const data = await Mongo.create_collection(request.body.payload.props)
   response.json(data)
 })
-
 router.post('/sync', async function sync_collection(request,response){
   console.log('syncing local collection')
   const { payload } = request.body
@@ -66,18 +84,19 @@ router.post('/sync', async function sync_collection(request,response){
       try {
         const data = Local.get_collection(collection.name)[0]
         const status = await Mongo.sync_collection( data )
+        console.log('STAT',status)
         if (status.success == true) {
           Local.update_collection(data.cid, {synced:true})
         }
         console.log('upload status done',status)
         response.json(status)
       } catch(e) {
-        response.json('error syncing collection', e )
+        console.log(e)
+        response.json(e)
       }
     }
   }
 })
-
 router.post('/ignore', async function ignore_collection(request,response){
   console.log('ignoring collection')
   const { payload } = request.body
@@ -91,48 +110,40 @@ router.post('/ignore', async function ignore_collection(request,response){
   if (confirmed) console.log('CONFIRMED')
   response.json({message: 'proccess complete', success: confirmed, reason: null})
 })
-
 router.delete('/:collectionID', async function dropCollection(request,response){
   const collection = request.params.collectionID;
   const result = await Mongo.remove_collection(collection);
   if (result.success == true) await Local.update_collection(result.id, {synced:false})
   response.json(result)
 })
-
 router.post('/:collectionID/:id',async function searchCollection(request,response){
   
 })
-
-router.get('/:collectionID', async function getCollection (request, response) {
-  const cName = request.params.collectionID;
+router.get('/:collection', async function getCollection (request, response) {
+  const cName = request.params.collection;
   const filter = request.query.filter;
+  const paginated = request.query.paginated
   let filters = {subtypes:[],sub_collections:[]};
-  if (filter === 'true'){
+  let data;
+  if (paginated === 'true' || paginated == true || filter === "true"){
       filters['subtypes'] = decodeURIComponent(request.query.st).split(',').filter(i => i != '' && i != null && i != undefined);
       filters['sub_collections'] = decodeURIComponent(request.query.sc).split(',').filter(i => i != '' && i != null && i != undefined);
-      console.log('FILTERS RECIEVED',filters)
+      const page = request.query?.page;
+      const limit = request.query?.limit;
+      data = await Mongo.get_collection_paginated({ page , limit, filters }, cName );
+  } else {
+    data = await Mongo.get_collection( cName );
   }
-  const page = request.query?.page;
-  const limit = request.query?.limit;
-  const data = await Mongo.get_collection({ page , limit, filters }, cName );
-  response.json(data);
+  response.json(data)
 })
-
 router.put('/:collectionID', async function editCollection(request,response){
   
 })
-
-router.post('/:collectionID', async function addToCollection (request, response) {
+router.post('/:collectionName', async function addToCollection (request, response) {
   const { payload } = request.body;
-  if (request.params.collectionID == payload.props.collection){
-      const result = await Mongo.addToCollection(payload.props)
-      response.json(result)
-  } else {
-      response.json({message: 'upload failed', success: false, reason: 'invalid collection name'})
-      return
-  }
+  const result = await Mongo.addToCollection(payload)
+  response.json(result)
 })
-
 router.get('/', async function getCollections(request,response) {
   const result = Local.get_all_collections(true);
   response.json(result);

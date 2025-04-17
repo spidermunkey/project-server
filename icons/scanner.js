@@ -142,7 +142,7 @@ const scanner = {
         for (const item of items) {
           const itemPath = path.join(directory, item.name);
           if (item.isDirectory()) await readDir(itemPath)
-          else if (item.isFile()) {
+          else if (item.isFile() && path.extname(itemPath) === '.svg') {
             const stats = await fs.promises.stat(itemPath);
             state[itemPath] = stats.mtimeMs;
           }

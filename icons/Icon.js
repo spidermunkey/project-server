@@ -24,7 +24,7 @@ module.exports.Icon = function(props) {
 } = props;
     return {
         cid,id,vid,trace,colors,isBenched,isFavorite,rebased,logs,tags,html,markup,name,subtype,collection,sub_collection,
-        del_status,settings
+        del_status,settings,created_at,updated_at
     }
 }
 /* 

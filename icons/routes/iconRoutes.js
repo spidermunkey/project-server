@@ -2,10 +2,30 @@ const express = require('express');
 const router = express.Router();
 const { Mongo } = require('../model.js');
 
+router.post('/colors/:id', async function addIconColrset(request,response){
+  const payload = request.body
+  const {id,collection,colorset} = payload;
+  console.log('SAVING COLORSET')
+  console.log(colorset);
+  const result = await Mongo.add_icon_colorset(id,collection,colorset);
+  response.json(result)
+})
+router.put('/colors/:id', async function setDefaultColor(request,response){
+  const payload = request.body;
+  const {id,collection,csid} = payload;
+  const result = await Mongo.set_default_color(id,collection,csid)
+  response.json(result);
+})
+router.delete('/colors/:id',async function deleteIconColor(request,response){
+  const id = request.params.id
+  const csid = decodeURIComponent(request.query.csid)
+  const collection = request.query.collection
+  const result = await Mongo.delete_icon_color(id,collection,csid);
+  response.json(result);
+})
 router.get('/settings/:id', async function getIconSettings(request,response){
   
 })
-
 router.post('/settings/:id', async function saveIconPreset(request,response){
   const { payload } = request.body
   // needs better sanitization

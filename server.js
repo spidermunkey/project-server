@@ -2,7 +2,7 @@ const morgan = require('morgan');
 const express = require('express');
 const app = express();
 const cors = require('cors');
-const PORT = 1279;
+const PORT = 1280;
 // const MessageBroker = require('./icons/messageBroker.js');
 const bodyParser = require('body-parser');
 
@@ -21,11 +21,13 @@ app.use(cors());
 const iconRouter = require('./icons/router.js');
 const colorRouter = require('./routes/colors.js');
 const timerRouter = require('./routes/timers.js');
+const birthdayRouter = require('./routes/birthdays.js');
 const testRouter = require('./icons/local_router.js');
 // const trackerRouter = require('./routes/trackers.js');
 app.use('/icons', iconRouter);
 app.use('/colors',colorRouter);
 app.use('/timers', timerRouter);
+app.use('/birthdays',birthdayRouter)
 // app.use('/trackers', trackerRouter);
 app.get('/', (req,res) => res.json('Hello From The API HOME'));
 app.use((req,res) => {
