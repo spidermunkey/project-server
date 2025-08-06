@@ -39,4 +39,8 @@ router.get('/fonts', async function(request,response){
 router.get('/fonts/:fontName', async (request,response) => {
 })
 
+router.get('/', (req,res) => res.json('Hello From The Font Family!'));
+router.use((req,res) => {
+    res.status(404).json("404 not found")
+});
 module.exports = router

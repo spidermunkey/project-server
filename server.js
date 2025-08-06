@@ -26,7 +26,8 @@ app.use(cors());
 // const trackerRouter = require('./routes/trackers.js');
 app.use('/icons', require('./icons/routes.js'));
 app.use('/colors', require('./colors/router.js'));
-app.use('/fonts', require('./fonts/router.js'))
+app.use('/fonts', require('./fonts/router.js'));
+app.use('/calendar', require('./calendar/router.js'))
 // app.use('/timers', timerRouter);
 // app.use('/birthdays',birthdayRouter)
 // app.use('/trackers', trackerRouter);
