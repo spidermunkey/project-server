@@ -1,9 +1,9 @@
 const express = require('express');
-const app = express();
+const router = express.Router();
 const mime = require('mime-types');
 const fs = require('fs-extra');
 
-app.get('/fonts', async function(request,response){
+router.get('/fonts', async function(request,response){
   const name = request.query?.name;
   const id = request.query?.id;
   const format = request.query?.format;
@@ -36,9 +36,7 @@ app.get('/fonts', async function(request,response){
 
 })
 
-app.get('/fonts/:fontName', async (request,response) => {
+router.get('/fonts/:fontName', async (request,response) => {
 })
 
-app.listen(3000,() => {
-  console.log('font server listening at localhost::3000')
-})
+module.exports = router
