@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { MongoClient } = require('mongodb');
+const { MongoClient, ObjectId } = require('mongodb');
 const { CONNECTION_STRING } = require('../.config/env.js');
 
 let client;
+
 async function connect() {
     if (!client) {
         client = new MongoClient(CONNECTION_STRING);
@@ -21,10 +22,48 @@ async function connect() {
     }
     return client.db('birthdays')
 }
-router.use('/', async (request,response) => {
-    const db = await connect();
-    const collection = db.collection('all');
-    const birthdays = await collection.find().toArray();
-    return response.json(birthdays);
+
+
+router.get('/', async (request,response) => {
+    try {
+        const db = await connect();
+        const collection = db.collection('all');
+        const birthdays = await collection.find().toArray();
+        return response.json(birthdays);  
+    } catch(error){
+        console.log(error);
+        return false
+    }
+
 })
+
+router.post('/', async (request,response) => {
+    try {
+        const db = await connect();
+        const collection = db.collection('all');
+        const birthday = request.body;
+        console.log('adding',birthday,request.body);
+        collection.insertOne(birthday)
+        response.status(200).json({ success: true });   
+     } catch(error){
+        console.log(error)
+        return false;
+    }
+
+})
+
+router.delete('/',async (request,response) => {
+    try {
+        const db = await connect();
+        const collection = db.collection('all');
+        const {id} = request.body;
+        console.log('deleting', id);
+        collection.deleteOne({_id:new ObjectId(id)})
+        response.status(200).json({ success: true });   
+    } catch(error){
+        console.log(error)
+        return false;
+    }
+})
+
 module.exports = router;
