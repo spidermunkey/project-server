@@ -24,8 +24,8 @@ app.use(cors());
 // const birthdayRouter = require('./routes/birthdays.js');
 // const testRouter = require('./icons/local_router.js');
 // const trackerRouter = require('./routes/trackers.js');
-app.use('/icons', require('./icons/server.js'));
-// app.use('/colors',colorRouter);
+app.use('/icons', require('./icons/routes.js'));
+app.use('/colors', require('./colors/router.js'));
 // app.use('/timers', timerRouter);
 // app.use('/birthdays',birthdayRouter)
 // app.use('/trackers', trackerRouter);
