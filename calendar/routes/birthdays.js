@@ -15,7 +15,7 @@ async function connect() {
         } catch (error) {
             // console.error('Failed to connect to MongoDB', error);
             // use local
-            console.log('db connection error',error)
+            console.log('db connection error in birthday module',error)
             return false;
         }
     }

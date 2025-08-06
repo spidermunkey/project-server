@@ -45,7 +45,7 @@ const meta = {
         } catch (error) {
             // console.error('Failed to connect to MongoDB', error);
             // use local
-            console.log('db connection error');
+            console.log('local sync: db connection error');
             console.log('status offline')
             this.status = 'offline'
             return false;
