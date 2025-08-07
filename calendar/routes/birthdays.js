@@ -28,6 +28,7 @@ router.get('/', async (request,response) => {
         const db = (await local_connection()).db('birthdays');
         const collection = db.collection('all');
         const birthdays = await collection.find().toArray();
+        console.log(birthdays)
         return response.json(birthdays);  
     } catch(error){
         console.log(error)

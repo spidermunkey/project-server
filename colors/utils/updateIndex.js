@@ -1,5 +1,5 @@
-const {local_client} = require('../utils/connect.js');
-const {uuid} = require('../utils/uuid.js');
+const {local_client} = require('./connect.js');
+const {uuid} = require('./uuid.js');
 async function run() {
   const connection = await local_client.connect();
   const db = connection.db('colors');

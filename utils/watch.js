@@ -1,157 +1,80 @@
-/*  */
-
 const chokidar = require('chokidar');
-const fs = require('fs-extra');
-const path = require('path');
-const targetFolder = "C:/Users/justi/Icons/recent";
-const watchFolder = "C:/Users/justi/Downloads";
-const appFolder = "C:/Users/justi/Icons";
-const model = require('../models/icons/model.js');
-
-const config = {
-  ignoreInitial: true,
-  ignored: /(^|[\/\\])\../, // ignore dotfiles
-  persistent: true,
-}
-
-module.exports.FsMonitor = class {
-
-  constructor(socketServer) {
-
-    this.socketServer = socketServer;
+const print = require('./print.js');
+const { EventEmitter } = require('node:events');
+class FsMonitor extends EventEmitter {
+  constructor(targetDir,config = {
+      ignoreInitial: true,
+      ignored: /(^|[\/\\])\../, // ignore dotfiles
+      persistent: true,
+      quite: false,
+    }) {
+    super();
     this.watcher = null;
-    socketServer.on('connection', this.handleSocket.bind(this))
-    
+    this.target = targetDir;
+    this.config = config;
     // Listen for server termination signals to clean up the watcher
     process.on('SIGINT', this.cleanup.bind(this));
     process.on('SIGTERM', this.cleanup.bind(this));
     process.on('exit', this.cleanup.bind(this));
-  }
 
-  watch() {
-    if (!this.watcher) 
-      this.watcher = chokidar.watch(watchFolder,config)
-        .on('add', this.onSingleEntry.bind(this) )
-    
-    console.log('socket active');
+    this.on('add', this.onSingleEntry.bind(this));
+    this.on('del',this.onDeleteEntry.bind(this));
+    this.on('dir',this.onAddDir.bind(this));
+    this.on('rmdir',this.onRemoveDir.bind(this));
+    this.on('change',this.onChangeEntry.bind(this));
+    this.on('error',this.onError.bind(this));
+    this.on('ready',this.onReady.bind(this));
+
   }
-  
+  watch() {
+    try {
+      if (!this.watcher){
+        this.watcher = chokidar.watch(this.target,config)
+          .on('add', this.emit('add'))
+          .on('unlink', this.emit('del'))
+          .on('addDir', this.emit('dir'))
+          .on('unlinkDir', this.emit('rmdir'))
+          .on('change', this.emit('change'))
+          .on('error', this.emit('error'))
+        console.log('watcher initiated')
+      } else {
+        console.log('already watching...', this.target)
+      }
+    } catch(error){
+      console.log('error intiating watcher... [target]: ', this.target, '[error]: ', error)
+    }
+  }
   cleanup() {
     if (this.watcher) {
-      this.watcher.close()
-        .then(() => console.log('File watcher closed'));
+      this.watcher.close().then(() => console.log('File watcher closed'));
       this.watcher = null;
     }
   }
-
-  handleSocket(socket) {
-    console.log('socket connected')
-    this.socket = socket
-    socket.send(JSON.stringify({ type: 'status', message:'listening for updates'}));
-    this.watch();
-    socket.on('message', function incoming(message) {
-        console.log('recieved: %s', message);
-        // socket.send('test');
-    })
-  }
-
-  async parseSVG(filePath) {
-    let markup;
-    let attemptRead = 0;
-    await parse(filePath);
-    return markup;
-    async function parse(filePath){
-      markup = fs.readFileSync(filePath,'utf8');
-      if (markup === '' && fs.existsSync(filePath) && attemptRead < 5) {
-        await new Promise(resolve => setTimeout(resolve, 50)); // wait for file to fully resolve
-        attemptRead++;
-        await parse(filePath);
-      }
-      if (markup == '' && attemptRead >= 5)
-        console.warn('download failed/n attempts: ',attemptRead);
-      return markup;
-    }
-  }
-  
-  async createSingleEntry(filename) {
-    const {name} = path.parse(filename);
-    const category = 'recent';
-    let markup = await this.parseSVG(filename);
-    return {
-      name,
-      category,
-      markup,
-    }
-  }
-  
   async onSingleEntry(filename) {
-    if (await isValidSvg(filename)) {
-        this.broadcastUpload(
-          (await this.uploadSingleEntry(
-            (await this.createSingleEntry(filename)))))
-            
-        await this.copySVG(filename)
-      }
+    print(`[ new entry | ${this.target} ] : `, filename)
   }
+  async onDeleteEntry(filename) {
+    print(`[ entry deleted | ${this.target} ] : `, filename)
+  }
+  async onChangeEntry(filename){
+    print(`[ entry changed | ${this.target} ] : `, filename)
 
-  async parseDirTree(dirname){
+  }
+  async onAddDir(filename){
+    print(`[ directory added | ${this.target} ] : `, filename)
     
   }
+  async onRemoveDir(filename){
+    print(`[ directory removed | ${this.target} ] : `, filename)
 
-  parseSVGDirectory(){}
+  }
+  async onError(error){
+    print(`[ watcher error | ${this.target} ] : `, this.target, filename, error)
+  }
+  async onReady(){
+    print(`[ watcher ready | ${this.target} ] : `, this.target, filename)
 
-  async uploadSingleEntry(entry) {
-    let status = await model.addToCollection('recent',entry);
-    status.success == false 
-      ? this.handleUploadFailed(status)
-      : this.handleUploadSuccess()
-    return status;
-  }
-
-  async broadcastUpload(status) {
-    status.success == false 
-      ? console.log('entry upload faileds [reason] : ', status.reason)
-      : console.log('entry uploaded to db : ', 'success')
-
-    this.socket 
-      ? this.socket.send(JSON.stringify({type: 'new entry', data: status }))
-      : console.log('broadcast failed, socket not active')
-  }
-  
-  handleUploadFailed({reason}) {
-    console.log('entry upload faileds [reason] : ', reason)
-  }
-  handleUploadSuccess() {
-    console.log('entry uploaded to db sending status via socket [status] : ', 'success')
-  }
-  
- async copySVG(filePath, destination = targetFolder) {
-  
-    const fileName = path.basename(filePath);
-    const newFilePath = path.join(destination, fileName);
-  
-    if (!await fs.exists(destination)) 
-      await fs.mkdir(destination, { recursive: true });
-  
-    await fs.promises.copyFile(filePath, newFilePath);
-    console.log(`SVG file copied: ${fileName}`);
-  
   }
 }
 
-function isValidSvg(filePath) {
-  console.log(path.dirname(filePath),watchFolder)
-  console.log(path.dirname(filePath) === watchFolder)
-  if (path.extname(filePath) === '.svg' && path.dirname(filePath) === watchFolder)
-    return filePath;
-  else return ''
-}
-
-/* 
-Example of Common File Signatures
-
-    ZIP files: 50 4B 03 04 (hexadecimal)
-    PDF files: 25 50 44 46 (hexadecimal for %PDF)
-    JPEG files: FF D8 FF E0 (hexadecimal)
-    PNG files: 89 50 4E 47 0D 0A 1A 0A (hexadecimal)
-*/
+module.exports = FsMonitor;

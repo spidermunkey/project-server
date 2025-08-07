@@ -1,6 +1,6 @@
 class DateTime {
-  constructor(dateObject) {}
-
+  constructor(dateObject) {
+  }
   static mns = 1 / 1000;
   static snm = 1 / 60;
   static mnh = 1 / 60;
@@ -571,4 +571,5 @@ class DateTime {
     return float - Math.floor(float);
   }
 }
+
 module.exports = DateTime
