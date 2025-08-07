@@ -123,11 +123,11 @@ router.post('/search', async (request,response) => {
 })
 
 router.get('/', async (request,response) => {
-    const db = await global.database.connect_local('colors')
-    const meta = db.collection('{{meta}}')
-    const meta_data = await meta.find().toArray()
-    console.log(meta_data)
-    response.json(meta_data)
+    // const db = await global.database.connect_local('colors')
+    // const meta = db.collection('{{meta}}')
+    // const meta_data = await meta.find().toArray()
+    // console.log(meta_data)
+    // response.json(meta_data)
 })
 
 module.exports = router;

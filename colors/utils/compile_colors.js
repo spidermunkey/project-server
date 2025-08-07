@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const client = require('../connect.js');
+const client = require('../../utils/connect.js');
 const {Color} = require('../../models/colors/Color.js');
 
 fs.readFile(path.join(__dirname,'../../data/allColors.json'),async (err,data) => {
