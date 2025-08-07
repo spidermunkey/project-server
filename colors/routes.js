@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const uuid = require('./utils/uuid.js')
+const uuid = require('./utils/uuid.js');
+const path = require('path');
+router.use(express.static(path.join(__dirname, '..' ,'public','colors')));
 
 router.get('/meta/collections', async (request,response) => {
     const db = await global.database.connect_local('colors')
@@ -122,12 +124,7 @@ router.post('/search', async (request,response) => {
     response.json({searchQuery:query,data:items})
 })
 
-router.get('/', async (request,response) => {
-    // const db = await global.database.connect_local('colors')
-    // const meta = db.collection('{{meta}}')
-    // const meta_data = await meta.find().toArray()
-    // console.log(meta_data)
-    // response.json(meta_data)
-})
+router.get('/', (request,response) => response.sendFile(path.join(__dirname, '..', 'public', 'colors', 'index.html')));
+
 
 module.exports = router;
