@@ -1,5 +1,5 @@
 require('dotenv').config({ path: `.env`});
-
+global.database = require('./utils/connect.js');
 const morgan = require('morgan');
 const express = require('express');
 const app = express();

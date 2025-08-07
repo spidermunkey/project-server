@@ -1,15 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const timerRouter = require('./routes/timers.js');
-const birthdayRouter = require('./routes/birthdays.js');
-const calendarRouter = require('./routes/calendar.js');
-const eventRouter = require('./routes/events.js');
-const todoRouter = require('./routes/todos.js');
-router.use('/timers', timerRouter);
-router.use('/birthdays',birthdayRouter);
-router.use('/calendar',calendarRouter);
-router.use('/events',eventRouter);
-router.use('/todos', todoRouter);
+
+router.use('/timers', require('./routes/timers.js'));
+router.use('/birthdays',require('./routes/birthdays.js'));
+router.use('/calendar',require('./routes/calendar.js'));
+router.use('/events',require('./routes/events.js'));
+router.use('/todos', require('./routes/todos.js'));
 
 router.get('/', (req,res) => res.json('Hello From The Calendar API!'));
 router.use((req,res) => {

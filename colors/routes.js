@@ -1,36 +1,30 @@
 const express = require('express');
 const router = express.Router();
 const uuid = require('./utils/uuid.js')
-const {local_client} = require('./utils/connect.js');
-
 
 router.get('/meta/collections', async (request,response) => {
-    const connection = await local_client.connect();
-    const db = connection.db('colors');
+    const db = await global.database.connect_local('colors')
     const meta = db.collection('{{meta}}');
     const meta_data = await meta.find({collection_type:'local'}).toArray();
     response.json(meta_data)
 })
 
 router.get('/meta/projects', async (request,response) => {
-    const connection = await local_client.connect();
-    const db = connection.db('colors');
+    const db = await global.database.connect_local('colors')
     const meta = db.collection('{{meta}}');
     const meta_data = await meta.find({collection_type:'project'}).toArray();
     response.json(meta_data)
 })
 
 router.get('/meta/index', async (request,response) => {
-    const connection = await local_client.connect();
-    const db = connection.db('colors');
+    const db = await global.database.connect_local('colors')
     const meta = db.collection('{{meta}}');
     const meta_data = await meta.find({collection_type:'index'}).toArray();
     response.json('meta_data')
 })
 
 router.get('/meta', async (request,response) => {
-    const connection = await local_client.connect();
-    const db = connection.db('colors');
+    const db = await global.database.connect_local('colors')
     const meta = db.collection('{{meta}}');
     const meta_data = await meta.find().toArray();
     response.json(meta_data);
@@ -38,8 +32,7 @@ router.get('/meta', async (request,response) => {
 
 router.get('/collections/:collection', async (request,response) => {
     const cid = request.params.collection
-    const connection = await local_client.connect();
-    const db = connection.db('colors');
+    const db = await global.database.connect_local('colors')
     const meta = db.collection('{{meta}}');
     const collectionData = await meta.findOne({id:cid});
     let name = collectionData.name === 'recent' ? '{{recent}}' : collectionData.name === 'all' ? '{{all}}' : collectionData.name
@@ -54,8 +47,7 @@ router.get('/collections/:collection', async (request,response) => {
 router.post('/collections/:collection', async (request,response) => {
     const cid = request.params.collection;
     const color = request.body.color;
-    const connection = await local_client.connect();
-    const db = connection.db('colors');
+    const db = await global.database.connect_local('colors')
     const meta = db.collection('{{meta}}');
     const collectionData = await meta.findOne({id:cid});
     const collection = db.collection(collectionData.name);
@@ -85,8 +77,7 @@ router.post('/collections/:collection', async (request,response) => {
 router.post('/collections/create', async (request,response) => {
     const collection = request.body.collection;
     const colors = collection?.colors || [];
-    const connection = await local_client.connect();
-    const db = connection.db('colors');
+    const db = await global.database.connect_local('colors')
     const meta = db.collection('{{meta}}');
     const meta_document = {
         name: collection.name,
@@ -104,8 +95,7 @@ router.post('/collections/create', async (request,response) => {
 router.post('collections/search', async (request,response) => {
     const query = request.body.query;
     const cid = request.body.cid;
-    const connection = await local_client.connect();
-    const db = connection.db('colors');
+    const db = await global.database.connect_local('colors')
     const meta = db.collection('{{meta}}');
     const collectionData = await meta.findOne({id:cid});
     const collection = db.collection(collectionData.name);
@@ -121,8 +111,7 @@ router.post('collections/search', async (request,response) => {
 
 router.post('/search', async (request,response) => {
     const query = request.body.query;
-    const connection = await local_client.connect();
-    const db = connection.db('colors');
+    const db = await global.database.connect_local('colors')
     const all = db.collection('{{all}}');
     const validQuery = typeof query === 'string' && query.trim().length > 0;
     let items = []
@@ -134,8 +123,7 @@ router.post('/search', async (request,response) => {
 })
 
 router.get('/', async (request,response) => {
-    const connection = await local_client.connect()
-    const db = connection.db('colors')
+    const db = await global.database.connect_local('colors')
     const meta = db.collection('{{meta}}')
     const meta_data = await meta.find().toArray()
     console.log(meta_data)
